@@ -47,6 +47,14 @@ auto from_file_and_override_with_tag_replacement(
 void from_file(const std::string &toml_path);
 
 /**
+ * Performs spdlog configuration setup from file and overrides already existing
+ * loggers in the current spdlog registry with the same name.
+ * @param toml_path Path to the TOML configuration file path.
+ * @throw setup_error
+ */
+void from_file_and_override_existing(const std::string &toml_path);
+
+/**
  * Performs spdlog configuration setup from both base and override files. The
  * base file is required while the override file is optional.
  * The configuration values from the override file will be merged into the base
@@ -75,7 +83,7 @@ auto from_file_and_override(
 void save_logger_to_file(
     const std::shared_ptr<spdlog::logger> &logger,
     const std::string &toml_path,
-    const bool overwrite = false);
+    bool overwrite = false);
 
 /**
  * Resets the given logger back to its base configuration from file, while
@@ -171,6 +179,37 @@ inline void from_file(const std::string &toml_path) {
 
     try {
         const auto config = cpptoml::parse_file(toml_path);
+        details::setup(config);
+    } catch (const exception &e) {
+        throw setup_error(e.what());
+    }
+}
+
+inline void from_file_and_override_existing(const std::string &toml_path) {
+    // std
+    using std::exception;
+    using std::string;
+
+    try {
+        const auto config = cpptoml::parse_file(toml_path);
+
+        // drop existing loggers with same name: toml configured loggers will
+        // override existing loggers
+        if (config && config->contains("logger")) {
+            auto loggers_table = config->get_table_array("logger");
+
+            if (loggers_table) {
+                for (const auto &logger_table : *loggers_table) {
+                    string logger_name =
+                        logger_table->get_as<string>("name").value_or("");
+
+                    if (spdlog::get(logger_name)) {
+                        spdlog::drop(logger_name);
+                    }
+                }
+            }
+        }
+
         details::setup(config);
     } catch (const exception &e) {
         throw setup_error(e.what());

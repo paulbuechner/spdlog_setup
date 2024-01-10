@@ -130,6 +130,36 @@ TEST_CASE("Parse TOML file for set-up", "[from_file]") {
 }
 
 TEST_CASE(
+    "Parse TOML file for set-up with override existing",
+    "[from_file_and_override_existing]") {
+    spdlog::drop_all();
+
+    const auto tmp_file = get_full_conf_tmp_file();
+
+    // Set up the root logger
+    spdlog_setup::from_file(tmp_file.get_file_path());
+
+    // Override the root logger
+    spdlog_setup::from_file_and_override_existing(tmp_file.get_file_path());
+
+    const auto root_logger = spdlog::get("root");
+    REQUIRE(root_logger != nullptr);
+
+    root_logger->trace("Test Message - Trace!");
+    root_logger->debug("Test Message - Debug!");
+    root_logger->info("Test Message - Info!");
+    root_logger->warn("Test Message - Warn!");
+    root_logger->error("Test Message - Error!");
+    root_logger->critical("Test Message - Critical!");
+
+    const auto console_logger = spdlog::get("console");
+    REQUIRE(console_logger != nullptr);
+
+    console_logger->info("Console Message - Info!");
+    console_logger->error("Console Message - Error!");
+}
+
+TEST_CASE(
     "Parse pre-TOML file for set-up", "[from_file_with_tag_replacement]") {
     spdlog::drop_all();
 

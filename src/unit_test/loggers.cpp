@@ -11,7 +11,6 @@
 
 #include <memory>
 #include <string>
-#include <typeinfo>
 #include <unordered_map>
 
 const std::unordered_map<std::string, std::shared_ptr<spdlog::sinks::sink>>
