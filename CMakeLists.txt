@@ -8,17 +8,22 @@ set(CPPTOML_MIN_VERSION "0.1.0")
 # ---------------------------------------------------------------------------------------
 # Set default build to release
 # ---------------------------------------------------------------------------------------
-if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose Release or Debug" FORCE)
-endif()
+endif ()
 
 # ---------------------------------------------------------------------------------------
 # Compiler config
 # ---------------------------------------------------------------------------------------
-if(NOT CMAKE_CXX_STANDARD)
+if (NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 20)
   set(CMAKE_CXX_STANDARD_REQUIRED ON)
-endif()
+endif ()
+
+# make sure __cplusplus is defined when using msvc and enable parallel build
+if (MSVC)
+  string(APPEND CMAKE_CXX_FLAGS " /Zc:__cplusplus /MP")
+endif ()
 
 #---------------------------------------------------------------------------------------
 # Set SPDLOG_SETUP_MASTER_PROJECT to ON if we are building spdlog_setup

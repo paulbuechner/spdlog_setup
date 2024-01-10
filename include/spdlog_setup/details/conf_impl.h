@@ -530,14 +530,14 @@ auto find_value_from_map(
     return iter->second;
 }
 
+#if __cplusplus > 201402L
+
 template <class Fn, class ErrFn>
-auto add_msg_on_err(Fn &&fn, ErrFn &&add_msg_on_err_fn) ->
-    typename std::invoke_result<Fn>::type {
+auto add_msg_on_err(Fn &&fn, ErrFn &&add_msg_on_err_fn)
+    -> std::invoke_result_t<Fn> {
 
     // std
     using std::exception;
-    using std::move;
-    using std::string;
 
     try {
         return fn();
@@ -545,6 +545,24 @@ auto add_msg_on_err(Fn &&fn, ErrFn &&add_msg_on_err_fn) ->
         throw setup_error(add_msg_on_err_fn(e.what()));
     }
 }
+
+#else
+
+template <class Fn, class ErrFn>
+auto add_msg_on_err(Fn &&fn, ErrFn &&add_msg_on_err_fn) ->
+    typename std::result_of<Fn()>::type {
+
+    // std
+    using std::exception;
+
+    try {
+        return fn();
+    } catch (const exception &e) {
+        throw setup_error(add_msg_on_err_fn(e.what()));
+    }
+}
+
+#endif
 
 inline auto parse_max_size(const std::string &max_size_str) -> uint64_t {
     // std
@@ -566,7 +584,7 @@ inline auto parse_max_size(const std::string &max_size_str) -> uint64_t {
             const uint64_t base_val = stoull(matches[1]);
             const string suffix = matches[2];
 
-            if (suffix == "") {
+            if (suffix.empty()) {
                 // byte
                 return base_val;
             } else if (suffix == "K") {
