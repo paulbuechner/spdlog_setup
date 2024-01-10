@@ -8,14 +8,14 @@
 
 #include "setup_error.h"
 
-#include "spdlog/fmt/fmt.h"
+#include <spdlog/fmt/fmt.h>
 
 #include <sstream>
 #include <string>
 #include <unordered_map>
 
-namespace spdlog_setup {
-namespace details {
+namespace spdlog_setup::details {
+
 // declaration section
 
 enum class render_state {
@@ -36,8 +36,6 @@ inline auto is_valid_var_char(const char c) -> bool {
 inline auto render(
     const std::string &tmpl,
     const std::unordered_map<std::string, std::string> &m) -> std::string {
-    // fmt
-    using fmt::format;
 
     // std
     using std::stringstream;
@@ -83,7 +81,7 @@ inline auto render(
                 break;
             default:
                 if (!is_valid_var_char(c)) {
-                    throw setup_error(format(
+                    throw setup_error(fmt::format(
                         "Found invalid char '{}' in variable interpolation",
                         c));
                 }
@@ -103,8 +101,8 @@ inline auto render(
                 break;
             default:
                 if (!is_valid_var_char(c)) {
-                    throw setup_error(
-                        format("Found invalid char '{}' in variable name", c));
+                    throw setup_error(fmt::format(
+                        "Found invalid char '{}' in variable name", c));
                 }
                 var_buffer << c;
                 break;
@@ -120,7 +118,7 @@ inline auto render(
                 state = render_state::var_ending;
                 break;
             default:
-                throw setup_error(format(
+                throw setup_error(fmt::format(
                     "Found invalid char '{}' after variable name '{}'",
                     c,
                     var_buffer.str()));
@@ -140,8 +138,8 @@ inline auto render(
                 break;
             }
             default:
-                throw setup_error(
-                    format("Found invalid char '{}' when expecting '}}'", c));
+                throw setup_error(fmt::format(
+                    "Found invalid char '{}' when expecting '}}'", c));
             }
             break;
 
@@ -168,5 +166,5 @@ inline auto render(
 
     return output.str();
 }
-} // namespace details
-} // namespace spdlog_setup
+
+} // namespace spdlog_setup::details

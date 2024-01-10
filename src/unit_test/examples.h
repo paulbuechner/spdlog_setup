@@ -16,6 +16,7 @@
 #include <string>
 
 namespace examples {
+
 #ifdef _WIN32
 static constexpr auto FULL_CONF = R"x(
     global_pattern = "[%Y-%m-%dT%T%z] [%L] <%n>: %v"
@@ -398,4 +399,5 @@ auto get_index(const Iterable &iterable, const size_t index) ->
 
     return *std::next(std::begin(iterable), index);
 }
+
 } // namespace examples

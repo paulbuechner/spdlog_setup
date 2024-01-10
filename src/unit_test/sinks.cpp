@@ -4,7 +4,7 @@
  * @version 0.3.3-pre
  */
 
-#include "catch.hpp"
+#include <catch2/catch_test_macros.hpp>
 
 #include "sinks.h"
 

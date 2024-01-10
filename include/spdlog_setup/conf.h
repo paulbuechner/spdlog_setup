@@ -21,7 +21,7 @@ namespace spdlog_setup {
  */
 template <class... Ps>
 void from_file_with_tag_replacement(
-    const std::string &pre_toml_path, Ps &&... ps);
+    const std::string &pre_toml_path, Ps &&...ps);
 
 /**
  * Performs spdlog configuration setup from both base and override files, with
@@ -37,7 +37,7 @@ template <class... Ps>
 auto from_file_and_override_with_tag_replacement(
     const std::string &base_pre_toml_path,
     const std::string &override_pre_toml_path,
-    const Ps &... ps) -> bool;
+    const Ps &...ps) -> bool;
 
 /**
  * Performs spdlog configuration setup from file.
@@ -94,18 +94,17 @@ auto delete_logger_in_file(
 
 template <class... Ps>
 void from_file_with_tag_replacement(
-    const std::string &pre_toml_path, Ps &&... ps) {
+    const std::string &pre_toml_path, Ps &&...ps) {
 
     // std
     using std::exception;
-    using std::forward;
     using std::stringstream;
 
     try {
         stringstream toml_ss;
 
         details::read_template_file_into_stringstream(
-            toml_ss, pre_toml_path, forward<Ps>(ps)...);
+            toml_ss, pre_toml_path, std::forward<Ps>(ps)...);
 
         cpptoml::parser parser(toml_ss);
         const auto config = parser.parse();
@@ -122,13 +121,11 @@ template <class... Ps>
 auto from_file_and_override_with_tag_replacement(
     const std::string &base_pre_toml_path,
     const std::string &override_pre_toml_path,
-    const Ps &... ps) -> bool {
+    const Ps &...ps) -> bool {
 
     // std
     using std::exception;
-    using std::forward;
     using std::ifstream;
-    using std::move;
     using std::stringstream;
 
     try {
@@ -224,12 +221,8 @@ inline void save_logger_to_file(
     using details::names::LOGGER_TABLE;
     using details::names::NAME;
 
-    // fmt
-    using fmt::format;
-
     // std
     using std::exception;
-    using std::find_if;
     using std::shared_ptr;
     using std::string;
 
@@ -243,8 +236,8 @@ inline void save_logger_to_file(
         })();
 
         if (!config) {
-            throw setup_error(
-                format("Unable to parse file at '{}' for saving", toml_path));
+            throw setup_error(fmt::format(
+                "Unable to parse file at '{}' for saving", toml_path));
         }
 
         auto &config_ref = *config;
@@ -302,12 +295,8 @@ inline auto delete_logger_in_file(
     using details::names::LOGGER_TABLE;
     using details::names::NAME;
 
-    // fmt
-    using fmt::format;
-
     // std
     using std::exception;
-    using std::find_if;
     using std::shared_ptr;
     using std::string;
 
@@ -315,7 +304,7 @@ inline auto delete_logger_in_file(
         const auto config = cpptoml::parse_file(toml_path);
 
         if (!config) {
-            throw setup_error(format(
+            throw setup_error(fmt::format(
                 "Unable to parse file at '{}' for deleting logger '{}'",
                 toml_path,
                 logger_name));
@@ -325,7 +314,7 @@ inline auto delete_logger_in_file(
         const auto curr_loggers = config_ref.get_table_array(LOGGER_TABLE);
 
         if (!curr_loggers) {
-            throw setup_error(format(
+            throw setup_error(fmt::format(
                 "Unable to find any logger table array for file at '{}'",
                 toml_path));
         }
@@ -348,4 +337,5 @@ inline auto delete_logger_in_file(
         throw setup_error(e.what());
     }
 }
+
 } // namespace spdlog_setup

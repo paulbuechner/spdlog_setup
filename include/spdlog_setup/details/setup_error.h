@@ -22,20 +22,20 @@ class setup_error : public std::exception {
      * @param msg Error message to contain.
      * @throw std::bad_alloc
      */
-    setup_error(const char *const msg);
+    explicit setup_error(const char *msg);
 
     /**
      * Constructor accepting the error message.
      * @param msg Error message to contain.
      * @throw std::bad_alloc
      */
-    setup_error(std::string msg);
+    explicit setup_error(std::string msg);
 
     /**
      * Returns the error message.
      * @return Error message.
      */
-    auto what() const noexcept -> const char * override;
+    [[nodiscard]] auto what() const noexcept -> const char * override;
 
   private:
     std::string msg;
@@ -50,4 +50,5 @@ inline setup_error::setup_error(std::string msg) : msg(std::move(msg)) {}
 inline auto setup_error::what() const noexcept -> const char * {
     return msg.c_str();
 }
+
 } // namespace spdlog_setup

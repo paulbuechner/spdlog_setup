@@ -22,7 +22,7 @@ inline auto generate_simple_default_logger_table()
     auto logger_table = cpptoml::make_table();
     logger_table->insert(names::NAME, std::string(TEST_LOGGER_NAME));
     logger_table->insert(names::SINKS, cpptoml::make_array());
-    return std::move(logger_table);
+    return logger_table;
 }
 
 inline auto generate_simple_default_logger_with_properties_table()
@@ -38,7 +38,7 @@ inline auto generate_simple_default_logger_with_properties_table()
     logger_table->insert(names::SINKS, cpptoml::make_array());
     logger_table->insert(names::LEVEL, err_str);
     logger_table->insert(names::FLUSH_LEVEL, crit_str);
-    return std::move(logger_table);
+    return logger_table;
 }
 
 inline auto generate_simple_sync_logger_table()
@@ -49,7 +49,7 @@ inline auto generate_simple_sync_logger_table()
     logger_table->insert(names::NAME, std::string(TEST_LOGGER_NAME));
     logger_table->insert(names::TYPE, names::SYNC);
     logger_table->insert(names::SINKS, cpptoml::make_array());
-    return std::move(logger_table);
+    return logger_table;
 }
 
 inline auto generate_simple_async_logger_table()
@@ -60,7 +60,7 @@ inline auto generate_simple_async_logger_table()
     logger_table->insert(names::NAME, std::string(TEST_LOGGER_NAME));
     logger_table->insert(names::TYPE, names::ASYNC);
     logger_table->insert(names::SINKS, cpptoml::make_array());
-    return std::move(logger_table);
+    return logger_table;
 }
 
 inline auto generate_global_async_logger_table()
@@ -71,7 +71,7 @@ inline auto generate_global_async_logger_table()
     logger_table->insert(names::NAME, std::string(TEST_LOGGER_NAME));
     logger_table->insert(names::TYPE, names::ASYNC);
     logger_table->insert(names::SINKS, cpptoml::make_array());
-    return std::move(logger_table);
+    return logger_table;
 }
 
 inline auto generate_invalid_sync_logger_table()
@@ -82,7 +82,7 @@ inline auto generate_invalid_sync_logger_table()
     logger_table->insert(names::NAME, std::string(TEST_LOGGER_NAME));
     logger_table->insert(names::TYPE, "xxx");
     logger_table->insert(names::SINKS, cpptoml::make_array());
-    return std::move(logger_table);
+    return logger_table;
 }
 
 inline auto generate_async_overflow_policy_block_logger_table()
@@ -94,7 +94,7 @@ inline auto generate_async_overflow_policy_block_logger_table()
     logger_table->insert(names::TYPE, names::ASYNC);
     logger_table->insert(names::OVERFLOW_POLICY, names::BLOCK);
     logger_table->insert(names::SINKS, cpptoml::make_array());
-    return std::move(logger_table);
+    return logger_table;
 }
 
 inline auto generate_async_overflow_policy_overrun_oldest_logger_table()
@@ -106,7 +106,7 @@ inline auto generate_async_overflow_policy_overrun_oldest_logger_table()
     logger_table->insert(names::TYPE, names::ASYNC);
     logger_table->insert(names::OVERFLOW_POLICY, names::OVERRUN_OLDEST);
     logger_table->insert(names::SINKS, cpptoml::make_array());
-    return std::move(logger_table);
+    return logger_table;
 }
 
 inline auto generate_invalid_async_overflow_policy_logger_table()
@@ -118,7 +118,7 @@ inline auto generate_invalid_async_overflow_policy_logger_table()
     logger_table->insert(names::TYPE, names::ASYNC);
     logger_table->insert(names::OVERFLOW_POLICY, "xxx");
     logger_table->insert(names::SINKS, cpptoml::make_array());
-    return std::move(logger_table);
+    return logger_table;
 }
 
 inline auto generate_simple_logger_with_sink_table()
@@ -132,5 +132,5 @@ inline auto generate_simple_logger_with_sink_table()
     sinks->push_back(std::string(TEST_SINK_NAME));
     logger_table->insert(names::SINKS, std::move(sinks));
 
-    return std::move(logger_table);
+    return logger_table;
 }

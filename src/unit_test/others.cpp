@@ -5,7 +5,7 @@
  */
 
 #define CATCH_CONFIG_MAIN
-#include "catch.hpp"
+#include <catch2/catch_test_macros.hpp>
 
 #if defined(unix) || defined(__unix__) || defined(__unix)
 #ifndef SPDLOG_ENABLE_SYSLOG
@@ -564,7 +564,7 @@ TEST_CASE("Delete logger from empty file", "[delete_logger_in_file_empty]") {
 }
 
 TEST_CASE("Check templating", "[check_templating]") {
-    REQUIRE(render("", {{}}) == "");
+    REQUIRE(render("", {{}}).empty());
     REQUIRE(render("abc", {{}}) == "abc");
     REQUIRE(render("{{ a }}", {{"a", "Alpha"}}) == "Alpha");
 
