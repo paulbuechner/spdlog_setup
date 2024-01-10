@@ -5,6 +5,21 @@ project(spdlog_setup VERSION 0.3.3 LANGUAGES CXX)
 set(SPDLOG_MIN_VERSION "1.0.0")
 set(CPPTOML_MIN_VERSION "0.1.0")
 
+# ---------------------------------------------------------------------------------------
+# Set default build to release
+# ---------------------------------------------------------------------------------------
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose Release or Debug" FORCE)
+endif()
+
+# ---------------------------------------------------------------------------------------
+# Compiler config
+# ---------------------------------------------------------------------------------------
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 20)
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+endif()
+
 #---------------------------------------------------------------------------------------
 # Set SPDLOG_SETUP_MASTER_PROJECT to ON if we are building spdlog_setup
 #---------------------------------------------------------------------------------------
@@ -143,7 +158,7 @@ if (SPDLOG_SETUP_INCLUDE_UNIT_TESTS)
 
   target_link_libraries(spdlog_setup_unit_test PRIVATE
                         spdlog_setup
-                        Catch2::Catch2
+                        Catch2::Catch2WithMain
                         Threads::Threads)
 
   if (SPDLOG_SETUP_INCLUDE_TEST_COVERAGE)
