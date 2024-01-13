@@ -1,145 +1,156 @@
 cmake_minimum_required(VERSION 3.24)
 
 # project variables
-project(spdlog_setup VERSION 0.3.3 LANGUAGES CXX)
+project(spdlog_setup
+        VERSION 0.3.3
+        HOMEPAGE_URL "https://github.com/paulbuechner/spdlog_setup"
+        DESCRIPTION "Header-only spdlog file-based setup library for convenience in initializing spdlog. Inspired by spdlog-config for using TOML configuration, a format that is simple and easy-to-read."
+        LANGUAGES CXX)
+
 set(SPDLOG_MIN_VERSION "1.0.0")
 set(CPPTOML_MIN_VERSION "0.1.0")
 
-# ---------------------------------------------------------------------------------------
-# Set default build to release
-# ---------------------------------------------------------------------------------------
-if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose Release or Debug" FORCE)
-endif ()
+# Needed to set the namespace for both the export targets and the alias libraries
+set(cmake_package_name spdlog_setup CACHE INTERNAL "")
 
 # ---------------------------------------------------------------------------------------
 # Compiler config
 # ---------------------------------------------------------------------------------------
-if (NOT CMAKE_CXX_STANDARD)
+if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 20)
   set(CMAKE_CXX_STANDARD_REQUIRED ON)
-endif ()
+endif()
 
 # make sure __cplusplus is defined when using msvc and enable parallel build
-if (MSVC)
+if(MSVC)
   string(APPEND CMAKE_CXX_FLAGS " /Zc:__cplusplus /MP")
-endif ()
+endif()
+
+# general compiler settings
+if(MSVC)
+  set(DEBUG_FLAGS /W4)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  # using regular Clang or AppleClang
+  set(DEBUG_FLAGS -Wall)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++")
+else()
+  set(DEBUG_FLAGS -Wall)
+endif()
+
+add_compile_options("$<$<CONFIG:DEBUG>:${DEBUG_FLAGS}>")
 
 #---------------------------------------------------------------------------------------
 # Set SPDLOG_SETUP_MASTER_PROJECT to ON if we are building spdlog_setup
 #---------------------------------------------------------------------------------------
 # Check if spdlog_setup is being used directly or via add_subdirectory, but allow overriding
-if (NOT DEFINED SPDLOG_SETUP_MASTER_PROJECT)
-  if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+if(NOT DEFINED SPDLOG_SETUP_MASTER_PROJECT)
+  if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     set(SPDLOG_SETUP_MASTER_PROJECT ON)
-  else ()
+  else()
     set(SPDLOG_SETUP_MASTER_PROJECT OFF)
-  endif ()
-endif ()
+  endif()
+endif()
 
-# general fixed compiler settings
-if (${MSVC})
-  set(DEBUG_FLAGS /W4)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
-elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  # using regular Clang or AppleClang
-  set(DEBUG_FLAGS -Wall)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++")
-else ()
-  set(DEBUG_FLAGS -Wall)
-endif ()
+include(GNUInstallDirs)
 
 option(SPDLOG_SETUP_INSTALL "Generate the install target" ${SPDLOG_SETUP_MASTER_PROJECT})
 
-option(SPDLOG_SETUP_INCLUDE_UNIT_TESTS "Build with unittests" OFF)
+option(SPDLOG_SETUP_INCLUDE_UNIT_TESTS "Build with unittests." OFF)
 
-option(SPDLOG_SETUP_CPPTOML_EXTERNAL "Use external CPPTOML library instead of bundled" OFF)
-if (SPDLOG_SETUP_CPPTOML_EXTERNAL)
-  configure_file(cmake/cpptoml_config.h.in "${CMAKE_CURRENT_BINARY_DIR}/include/spdlog_setup/details/third_party/cpptoml.h" @ONLY)
-endif ()
+option(SPDLOG_SETUP_CPPTOML_EXTERNAL "Use external cpptoml library instead of bundled." OFF)
 
 # allow thread library to be used for linking
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 set(THREADS_PTHREAD_ARG "0" CACHE STRING "Result from TRY_RUN" FORCE)
 find_package(Threads REQUIRED)
 
-add_compile_options("$<$<CONFIG:DEBUG>:${DEBUG_FLAGS}>")
-include(CMakeToolsHelpers OPTIONAL)
+# add library
+add_library(${PROJECT_NAME} INTERFACE)
+add_library(${cmake_package_name}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
-if (EXISTS ${CMAKE_SOURCE_DIR}/deps/spdlog/CMakeLists.txt)
+target_include_directories(${PROJECT_NAME} INTERFACE
+                           "$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>"
+                           "$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}>"
+                           )
+
+# Use local spdlog if it exists (development), otherwise use installed version
+if(EXISTS ${CMAKE_SOURCE_DIR}/deps/spdlog/CMakeLists.txt)
   add_subdirectory(deps/spdlog)
-else ()
-  # allow usage of installed dependency
-  find_package(spdlog ${SPDLOG_MIN_VERSION} REQUIRED)
-  add_library(${PROJECT_NAME}_spdlog INTERFACE IMPORTED)
-endif ()
+else()
+  find_package(spdlog ${SPDLOG_MIN_VERSION} CONFIG REQUIRED)
+endif()
 
-if (SPDLOG_SETUP_CPPTOML_EXTERNAL)
-  if (EXISTS ${CMAKE_SOURCE_DIR}/deps/cpptoml/CMakeLists.txt)
-    add_subdirectory(deps/cpptoml)
-  else ()
-    # allow usage of installed dependency
-    find_package(cpptoml ${CPPTOML_MIN_VERSION} REQUIRED)
-    add_library(${PROJECT_NAME}_cpptoml INTERFACE IMPORTED)
-  endif ()
-endif ()
+# ---------------------------------------------------------------------------------------
+# Use cpptoml package if using external cpptoml
+# ---------------------------------------------------------------------------------------
+if(SPDLOG_SETUP_CPPTOML_EXTERNAL)
+  if(NOT TARGET cpptoml)
+    # Use local cpptoml if it exists (development), otherwise use installed version
+    if(EXISTS ${CMAKE_SOURCE_DIR}/deps/cpptoml/CMakeLists.txt)
+      add_subdirectory(deps/cpptoml)
+    else()
+      find_package(cpptoml ${CPPTOML_MIN_VERSION} CONFIG REQUIRED)
+    endif()
+  endif()
+  target_compile_definitions(${PROJECT_NAME} INTERFACE SPDLOG_SETUP_CPPTOML_EXTERNAL)
 
-# spdlog_setup
-add_library(spdlog_setup INTERFACE)
+  target_link_libraries(${PROJECT_NAME} INTERFACE cpptoml)
 
-target_include_directories(spdlog_setup INTERFACE
-                           $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-                           $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
-                           $<INSTALL_INTERFACE:include>)
+  set(PKG_CONFIG_REQUIRES cpptoml) # add dependency to pkg-config
+endif()
 
-if (TARGET spdlog::spdlog_header_only)
-  target_link_libraries(spdlog_setup INTERFACE
-                        spdlog::spdlog_header_only)
-else ()
-  target_link_libraries(spdlog_setup INTERFACE
-                        spdlog)
-endif ()
+# ---------------------------------------------------------------------------------------
+# Install
+# ---------------------------------------------------------------------------------------
+if(SPDLOG_SETUP_INSTALL)
+  message(STATUS "Generating install")
+  set(project_config_in "${CMAKE_CURRENT_SOURCE_DIR}/cmake/${PROJECT_NAME}-config.cmake.in")
+  set(project_config_out "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake")
+  set(config_targets_file "${PROJECT_NAME}-targets.cmake")
+  set(version_config_file "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake")
+  set(export_dest_dir "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
 
-if (SPDLOG_SETUP_INSTALL)
-  install(TARGETS spdlog_setup EXPORT spdlog_setup)
-  install(DIRECTORY include/spdlog_setup DESTINATION include)
-
-  install(EXPORT spdlog_setup
-          FILE spdlog_setup-targets.cmake
-          NAMESPACE spdlog_setup::
-          DESTINATION lib/cmake/spdlog_setup)
-
-  include(CMakePackageConfigHelpers)
-
-  configure_package_config_file(
-    cmake/spdlog_setup-config.cmake.in
-    "${CMAKE_CURRENT_BINARY_DIR}/cmake/spdlog_setup-config.cmake"
-    INSTALL_DESTINATION lib/cmake/spdlog_setup
-    NO_CHECK_REQUIRED_COMPONENTS_MACRO)
-
-  write_basic_package_version_file(
-    "${CMAKE_CURRENT_BINARY_DIR}/cmake/spdlog_setup-config-version.cmake"
-    VERSION ${spdlog_setup_VERSION}
-    COMPATIBILITY SameMajorVersion)
+  # ---------------------------------------------------------------------------------------
+  # Include files
+  # ---------------------------------------------------------------------------------------
+  install(DIRECTORY include/ DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}" PATTERN "cpptoml" EXCLUDE)
 
   install(
-    FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/cmake/spdlog_setup-config.cmake"
-    "${CMAKE_CURRENT_BINARY_DIR}/cmake/spdlog_setup-config-version.cmake"
-    DESTINATION lib/cmake/spdlog_setup)
+    TARGETS ${PROJECT_NAME}
+    EXPORT ${PROJECT_NAME}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-  if (SPDLOG_SETUP_CPPTOML_EXTERNAL)
-    install(
-      FILES
-      "${CMAKE_CURRENT_BINARY_DIR}/include/spdlog_setup/details/third_party/cpptoml.h"
-      DESTINATION include/spdlog_setup/details/third_party)
-  endif ()
-endif ()
+  if(NOT SPDLOG_SETUP_CPPTOML_EXTERNAL)
+    install(DIRECTORY include/${PROJECT_NAME}/cpptoml/
+            DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}/cpptoml/")
+  endif()
+
+  # ---------------------------------------------------------------------------------------
+  # Install CMake config files
+  # ---------------------------------------------------------------------------------------
+  export(TARGETS ${PROJECT_NAME} NAMESPACE ${PROJECT_NAME}:: FILE "${CMAKE_CURRENT_BINARY_DIR}/${config_targets_file}")
+  install(EXPORT ${PROJECT_NAME} DESTINATION ${export_dest_dir} NAMESPACE ${PROJECT_NAME}:: FILE ${config_targets_file})
+
+  include(CMakePackageConfigHelpers)
+  configure_package_config_file("${project_config_in}" "${project_config_out}" INSTALL_DESTINATION ${export_dest_dir})
+
+  write_basic_package_version_file("${version_config_file}" COMPATIBILITY SameMajorVersion)
+  install(FILES "${project_config_out}" "${version_config_file}" DESTINATION "${export_dest_dir}")
+
+  # ---------------------------------------------------------------------------------------
+  # Support creation of installable packages
+  # ---------------------------------------------------------------------------------------
+  include(cmake/spdlog_setup-cpack.cmake)
+endif()
 
 # spdlog_setup_unit_test
-FILE(GLOB unit_test_cpps src/unit_test/*.cpp)
-if (SPDLOG_SETUP_INCLUDE_UNIT_TESTS)
+if(SPDLOG_SETUP_INCLUDE_UNIT_TESTS)
+  FILE(GLOB unit_test_cpps src/unit_test/*.cpp)
+
   add_executable(spdlog_setup_unit_test
                  ${unit_test_cpps})
 
@@ -148,29 +159,31 @@ if (SPDLOG_SETUP_INCLUDE_UNIT_TESTS)
   enable_testing()
   add_test(spdlog_setup_unit_test spdlog_setup_unit_test -s)
 
-  if (EXISTS ${CMAKE_SOURCE_DIR}/deps/Catch2/CMakeLists.txt)
+  # Use local Catch2 if it exists (development), otherwise use installed version
+  if(EXISTS ${CMAKE_SOURCE_DIR}/deps/Catch2/CMakeLists.txt)
     add_subdirectory(deps/Catch2)
-  else ()
+  else()
     # allow usage of installed dependency
-    find_package(Catch2 REQUIRED)
-    add_library(${PROJECT_NAME}_spdlog INTERFACE IMPORTED)
-  endif ()
+    find_package(Catch2 CONFIG REQUIRED)
+  endif()
 
-  if (SPDLOG_SETUP_CPPTOML_EXTERNAL)
-    target_include_directories(spdlog_setup_unit_test PRIVATE
-                               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/deps/cpptoml/include>)
-  endif ()
+  if(SPDLOG_SETUP_CPPTOML_EXTERNAL)
+    target_compile_definitions(spdlog_setup_unit_test PRIVATE SPDLOG_SETUP_CPPTOML_EXTERNAL)
+    target_link_libraries(spdlog_setup_unit_test PRIVATE
+                          cpptoml)
+  endif()
 
   target_link_libraries(spdlog_setup_unit_test PRIVATE
                         spdlog_setup
+                        spdlog::spdlog_header_only
                         Catch2::Catch2WithMain
                         Threads::Threads)
 
-  if (SPDLOG_SETUP_INCLUDE_TEST_COVERAGE)
+  if(SPDLOG_SETUP_INCLUDE_TEST_COVERAGE)
     target_compile_options(spdlog_setup_unit_test PRIVATE
                            -coverage)
 
     target_link_libraries(spdlog_setup_unit_test PRIVATE
                           --coverage)
-  endif ()
-endif ()
+  endif()
+endif()

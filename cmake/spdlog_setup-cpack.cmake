@@ -1,0 +1,48 @@
+set(CPACK_GENERATOR "ZIP" CACHE STRING "Semicolon separated list of generators")
+
+set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY 0)
+set(CPACK_INSTALL_CMAKE_PROJECTS "${CMAKE_BINARY_DIR}" "${PROJECT_NAME}" ALL .)
+
+set(CPACK_PACKAGE_NAME "spdlog_setup")
+set(CPACK_PROJECT_URL "https://github.com/paulbuechner/spdlog_setup")
+set(CPACK_PACKAGE_VENDOR "Paul Büchner")
+set(CPACK_PACKAGE_CONTACT "Paul Büchner <paul-buechner_86432180@outlook.com>")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Header-only spdlog file-based setup library for convenience in initializing spdlog. Inspired by spdlog-config for using TOML configuration, a format that is simple and easy-to-read.")
+set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
+set(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
+set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
+set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH})
+if (PROJECT_VERSION_TWEAK)
+  set(CPACK_PACKAGE_VERSION ${CPACK_PACKAGE_VERSION}.${PROJECT_VERSION_TWEAK})
+endif ()
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
+set(CPACK_PACKAGE_INSTALL_DIRECTORY "${CPACK_PACKAGE_NAME}")
+set(CPACK_PACKAGE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/packages")
+set(CPACK_PACKAGE_RELOCATABLE ON CACHE BOOL "Build relocatable package")
+
+set(CPACK_RPM_PACKAGE_LICENSE "Apache-2.0")
+set(CPACK_RPM_PACKAGE_GROUP "Development/Libraries")
+set(CPACK_DEBIAN_PACKAGE_SECTION "libs")
+
+if (NOT CPACK_PACKAGE_RELOCATABLE)
+  # Depend on pkgconfig rpm to create the system pkgconfig folder
+  set(CPACK_RPM_PACKAGE_REQUIRES pkgconfig)
+  set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION
+      "${CPACK_PACKAGING_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/pkgconfig")
+endif ()
+
+# Optionally add NSIS if it's available
+if (NSIS_MAKENSIS_EXECUTABLE)
+  message(STATUS "Using NSIS_MAKENSIS_EXECUTABLE: ${NSIS_MAKENSIS_EXECUTABLE}")
+  set(NSIS_MAKENSIS_EXECUTABLE ${NSIS_MAKENSIS_EXECUTABLE} CACHE FILEPATH
+      "Path to makensis.exe")
+else ()
+  find_program(NSIS_MAKENSIS_EXECUTABLE makensis)
+endif ()
+
+if (NSIS_MAKENSIS_EXECUTABLE)
+  list(APPEND CPACK_GENERATOR "NSIS")
+  set(CPACK_NSIS_MODIFY_PATH ON) # Does not work always
+endif ()
+
+include(CPack)

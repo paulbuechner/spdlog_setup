@@ -10,10 +10,12 @@
 #define FMT_HEADER_ONLY
 #endif
 
-#include "third_party/cpptoml.h"
-#if defined(SPDLOG_SETUP_CPPTOML_EXTERNAL)
-#include "cpptoml.h"
+#ifdef SPDLOG_SETUP_CPPTOML_EXTERNAL
+#include <cpptoml.h>
+#else
+#include "spdlog_setup/cpptoml/cpptoml.h"
 #endif
+
 #include "setup_error.h"
 
 // Just so that it works for v1.3.0
@@ -59,6 +61,7 @@
 #ifndef F_OK
 #define F_OK 0
 #endif
+
 #else
 #include <sys/stat.h>
 #include <unistd.h>

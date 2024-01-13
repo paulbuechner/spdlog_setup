@@ -1,0 +1,22 @@
+{
+  "name": "spdlog-setup",
+  "version": "0.3.3",
+  "license": "MIT",
+  "description": [
+    "Header-only spdlog file-based setup library for convenience in initializing spdlog. Inspired by ",
+    "spdlog-config for using TOML configuration, a format that is simple and easy-to-read."
+  ],
+  "homepage": "https://github.com/guangie88/spdlog_setup",
+  "dependencies": [
+    "spdlog",
+    "cpptoml",
+    {
+      "name": "vcpkg-cmake",
+      "host": true
+    },
+    {
+      "name": "vcpkg-cmake-config",
+      "host": true
+    }
+  ]
+}
